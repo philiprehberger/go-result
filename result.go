@@ -1,0 +1,114 @@
+// Package result provides a generic Result type for Go inspired by Rust's Result<T, E>.
+package result
+
+import "fmt"
+
+// Result represents either a success value (Ok) or an error value (Err).
+type Result[T any] struct {
+	value T
+	err   error
+	ok    bool
+}
+
+// Ok creates a successful Result containing the given value.
+func Ok[T any](value T) Result[T] {
+	return Result[T]{value: value, ok: true}
+}
+
+// Err creates a failed Result containing the given error.
+func Err[T any](err error) Result[T] {
+	return Result[T]{err: err, ok: false}
+}
+
+// Errf creates a failed Result with a formatted error message.
+func Errf[T any](format string, args ...any) Result[T] {
+	return Result[T]{err: fmt.Errorf(format, args...), ok: false}
+}
+
+// IsOk returns true if the Result is a success.
+func (r Result[T]) IsOk() bool {
+	return r.ok
+}
+
+// IsErr returns true if the Result is an error.
+func (r Result[T]) IsErr() bool {
+	return !r.ok
+}
+
+// Unwrap returns the success value or panics if the Result is an error.
+func (r Result[T]) Unwrap() T {
+	if !r.ok {
+		panic(fmt.Sprintf("called Unwrap on an Err value: %v", r.err))
+	}
+	return r.value
+}
+
+// UnwrapOr returns the success value or the provided default.
+func (r Result[T]) UnwrapOr(def T) T {
+	if r.ok {
+		return r.value
+	}
+	return def
+}
+
+// UnwrapOrElse returns the success value or calls the provided function.
+func (r Result[T]) UnwrapOrElse(fn func(error) T) T {
+	if r.ok {
+		return r.value
+	}
+	return fn(r.err)
+}
+
+// Error returns the error value or nil if the Result is Ok.
+func (r Result[T]) Error() error {
+	if r.ok {
+		return nil
+	}
+	return r.err
+}
+
+// Map transforms the success value using the given function.
+func Map[T any, U any](r Result[T], fn func(T) U) Result[U] {
+	if r.ok {
+		return Ok[U](fn(r.value))
+	}
+	return Err[U](r.err)
+}
+
+// FlatMap transforms the success value using a function that returns a Result.
+func FlatMap[T any, U any](r Result[T], fn func(T) Result[U]) Result[U] {
+	if r.ok {
+		return fn(r.value)
+	}
+	return Err[U](r.err)
+}
+
+// Try wraps a function call that returns (T, error) into a Result.
+func Try[T any](fn func() (T, error)) Result[T] {
+	value, err := fn()
+	if err != nil {
+		return Err[T](err)
+	}
+	return Ok[T](value)
+}
+
+// All collects a slice of Results into a Result containing a slice of values.
+// Returns the first error encountered.
+func All[T any](results []Result[T]) Result[[]T] {
+	values := make([]T, 0, len(results))
+	for _, r := range results {
+		if r.IsErr() {
+			return Err[[]T](r.err)
+		}
+		values = append(values, r.value)
+	}
+	return Ok[[]T](values)
+}
+
+// Match applies one of two functions depending on whether the Result is Ok or Err.
+func Match[T any, U any](r Result[T], onOk func(T) U, onErr func(error) U) U {
+	if r.ok {
+		return onOk(r.value)
+	}
+	return onErr(r.err)
+}
