@@ -22,6 +22,17 @@ r2 := result.Err[int](errors.New("not found"))
 fmt.Println(r2.UnwrapOr(0)) // 0
 ```
 
+### UnwrapOrElse — Compute Default from Error
+
+```go
+val := r.UnwrapOrElse(func(err error) int {
+    log.Printf("falling back due to: %v", err)
+    return -1
+})
+```
+
+> **Note:** `Unwrap()` panics if the Result is an error. Use `UnwrapOr` or `UnwrapOrElse` for safe extraction.
+
 ### Try — Wrap (T, error)
 
 ```go
