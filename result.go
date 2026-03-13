@@ -35,12 +35,36 @@ func (r Result[T]) IsErr() bool {
 	return !r.ok
 }
 
+// String returns a human-readable representation of the Result.
+func (r Result[T]) String() string {
+	if r.ok {
+		return fmt.Sprintf("Ok(%v)", r.value)
+	}
+	return fmt.Sprintf("Err(%v)", r.err)
+}
+
 // Unwrap returns the success value or panics if the Result is an error.
 func (r Result[T]) Unwrap() T {
 	if !r.ok {
 		panic(fmt.Sprintf("called Unwrap on an Err value: %v", r.err))
 	}
 	return r.value
+}
+
+// Expect returns the success value or panics with the given message if the Result is an error.
+func (r Result[T]) Expect(msg string) T {
+	if !r.ok {
+		panic(fmt.Sprintf("%s: %v", msg, r.err))
+	}
+	return r.value
+}
+
+// Or returns the Result if it is Ok, otherwise returns the provided fallback Result.
+func (r Result[T]) Or(other Result[T]) Result[T] {
+	if r.ok {
+		return r
+	}
+	return other
 }
 
 // UnwrapOr returns the success value or the provided default.

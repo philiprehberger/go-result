@@ -31,7 +31,28 @@ val := r.UnwrapOrElse(func(err error) int {
 })
 ```
 
-> **Note:** `Unwrap()` panics if the Result is an error. Use `UnwrapOr` or `UnwrapOrElse` for safe extraction.
+### Expect — Unwrap with Custom Panic Message
+
+```go
+cfg := r.Expect("config must be valid")
+// panics with "config must be valid: <error>" if Err
+```
+
+### Or — Fallback Result
+
+```go
+r := result.Err[int](errors.New("fail"))
+val := r.Or(result.Ok(42)) // Ok(42)
+```
+
+### String Representation
+
+```go
+fmt.Println(result.Ok(42))              // Ok(42)
+fmt.Println(result.Err[int](err))       // Err(something failed)
+```
+
+> **Note:** `Unwrap()` and `Expect()` panic if the Result is an error. Use `UnwrapOr` or `UnwrapOrElse` for safe extraction.
 
 ### Try — Wrap (T, error)
 

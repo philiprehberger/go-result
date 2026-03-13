@@ -235,6 +235,75 @@ func TestMatchErr(t *testing.T) {
 	}
 }
 
+func TestStringOk(t *testing.T) {
+	r := Ok(42)
+	s := r.String()
+	if s != "Ok(42)" {
+		t.Fatalf("expected 'Ok(42)', got %q", s)
+	}
+}
+
+func TestStringErr(t *testing.T) {
+	r := Err[int](errors.New("fail"))
+	s := r.String()
+	if s != "Err(fail)" {
+		t.Fatalf("expected 'Err(fail)', got %q", s)
+	}
+}
+
+func TestExpectOk(t *testing.T) {
+	r := Ok(42)
+	val := r.Expect("should not panic")
+	if val != 42 {
+		t.Fatalf("expected 42, got %d", val)
+	}
+}
+
+func TestExpectPanics(t *testing.T) {
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Fatal("expected panic from Expect on Err")
+		}
+		msg := fmt.Sprintf("%v", r)
+		if msg != "config error: fail" {
+			t.Fatalf("expected 'config error: fail', got %q", msg)
+		}
+	}()
+	r := Err[int](errors.New("fail"))
+	r.Expect("config error")
+}
+
+func TestOrOk(t *testing.T) {
+	r := Ok(42)
+	fallback := Ok(99)
+	got := r.Or(fallback)
+	if got.Unwrap() != 42 {
+		t.Fatalf("expected 42 from Or on Ok, got %d", got.Unwrap())
+	}
+}
+
+func TestOrErr(t *testing.T) {
+	r := Err[int](errors.New("fail"))
+	fallback := Ok(99)
+	got := r.Or(fallback)
+	if got.Unwrap() != 99 {
+		t.Fatalf("expected 99 from Or on Err, got %d", got.Unwrap())
+	}
+}
+
+func TestOrBothErr(t *testing.T) {
+	r := Err[int](errors.New("first"))
+	fallback := Err[int](errors.New("second"))
+	got := r.Or(fallback)
+	if !got.IsErr() {
+		t.Fatal("expected Err when both are Err")
+	}
+	if got.Error().Error() != "second" {
+		t.Fatalf("expected 'second' error, got %q", got.Error().Error())
+	}
+}
+
 func TestMatchReturnType(t *testing.T) {
 	r := Ok(10)
 	val := Match(r,
