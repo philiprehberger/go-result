@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1
+
+- Add badges and Development section to README
+
 ## 0.3.0
 
 - Add `String()` method for human-readable representation (`Ok(42)` / `Err(fail)`)
