@@ -91,6 +91,51 @@ func (r Result[T]) Error() error {
 	return r.err
 }
 
+// OrElse returns r if Ok, otherwise calls fn with the error to produce an alternative Result.
+func (r Result[T]) OrElse(fn func(error) Result[T]) Result[T] {
+	if r.ok {
+		return r
+	}
+	return fn(r.err)
+}
+
+// Filter returns Err if the Ok value doesn't match the predicate. errFn produces the error from the value.
+func (r Result[T]) Filter(predicate func(T) bool, errFn func(T) error) Result[T] {
+	if !r.ok {
+		return r
+	}
+	if predicate(r.value) {
+		return r
+	}
+	return Err[T](errFn(r.value))
+}
+
+// IsOkAnd returns true if the Result is Ok and the value matches the predicate.
+func (r Result[T]) IsOkAnd(predicate func(T) bool) bool {
+	return r.ok && predicate(r.value)
+}
+
+// IsErrAnd returns true if the Result is Err and the error matches the predicate.
+func (r Result[T]) IsErrAnd(predicate func(error) bool) bool {
+	return !r.ok && predicate(r.err)
+}
+
+// Tap calls fn with the Ok value for side effects, then returns the original Result unchanged.
+func (r Result[T]) Tap(fn func(T)) Result[T] {
+	if r.ok {
+		fn(r.value)
+	}
+	return r
+}
+
+// TapErr calls fn with the error for side effects, then returns the original Result unchanged.
+func (r Result[T]) TapErr(fn func(error)) Result[T] {
+	if !r.ok {
+		fn(r.err)
+	}
+	return r
+}
+
 // Map transforms the success value using the given function.
 func Map[T any, U any](r Result[T], fn func(T) U) Result[U] {
 	if r.ok {

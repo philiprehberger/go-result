@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0
+
+- Add `OrElse` for error recovery
+- Add `Filter` for predicate-based validation
+- Add `IsOkAnd` and `IsErrAnd` predicate checks
+- Add `Tap` and `TapErr` for side effects
+
 ## 0.3.1
 
 - Add badges and Development section to README

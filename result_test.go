@@ -304,6 +304,169 @@ func TestOrBothErr(t *testing.T) {
 	}
 }
 
+func TestOrElseOk(t *testing.T) {
+	r := Ok(42)
+	got := r.OrElse(func(err error) Result[int] {
+		t.Fatal("function should not be called for Ok")
+		return Ok(0)
+	})
+	if got.Unwrap() != 42 {
+		t.Fatalf("expected 42, got %d", got.Unwrap())
+	}
+}
+
+func TestOrElseErr(t *testing.T) {
+	r := Err[int](errors.New("fail"))
+	got := r.OrElse(func(err error) Result[int] {
+		if err.Error() != "fail" {
+			t.Fatalf("expected 'fail' error in callback, got %v", err)
+		}
+		return Ok(99)
+	})
+	if got.Unwrap() != 99 {
+		t.Fatalf("expected 99, got %d", got.Unwrap())
+	}
+}
+
+func TestOrElseErrToErr(t *testing.T) {
+	r := Err[int](errors.New("first"))
+	got := r.OrElse(func(err error) Result[int] {
+		return Err[int](errors.New("second"))
+	})
+	if !got.IsErr() {
+		t.Fatal("expected Err")
+	}
+	if got.Error().Error() != "second" {
+		t.Fatalf("expected 'second', got %q", got.Error().Error())
+	}
+}
+
+func TestFilterOkPass(t *testing.T) {
+	r := Ok(42)
+	got := r.Filter(
+		func(v int) bool { return v > 0 },
+		func(v int) error { return fmt.Errorf("expected positive, got %d", v) },
+	)
+	if !got.IsOk() || got.Unwrap() != 42 {
+		t.Fatalf("expected Ok(42), got %v", got)
+	}
+}
+
+func TestFilterOkFail(t *testing.T) {
+	r := Ok(-5)
+	got := r.Filter(
+		func(v int) bool { return v > 0 },
+		func(v int) error { return fmt.Errorf("expected positive, got %d", v) },
+	)
+	if !got.IsErr() {
+		t.Fatal("expected Err when predicate fails")
+	}
+	if got.Error().Error() != "expected positive, got -5" {
+		t.Fatalf("unexpected error: %v", got.Error())
+	}
+}
+
+func TestFilterErr(t *testing.T) {
+	r := Err[int](errors.New("fail"))
+	got := r.Filter(
+		func(v int) bool { return true },
+		func(v int) error { return errors.New("should not run") },
+	)
+	if !got.IsErr() || got.Error().Error() != "fail" {
+		t.Fatalf("expected original Err, got %v", got)
+	}
+}
+
+func TestIsOkAndTrue(t *testing.T) {
+	r := Ok(42)
+	if !r.IsOkAnd(func(v int) bool { return v == 42 }) {
+		t.Fatal("expected true")
+	}
+}
+
+func TestIsOkAndFalse(t *testing.T) {
+	r := Ok(42)
+	if r.IsOkAnd(func(v int) bool { return v == 0 }) {
+		t.Fatal("expected false when predicate fails")
+	}
+}
+
+func TestIsOkAndErr(t *testing.T) {
+	r := Err[int](errors.New("fail"))
+	if r.IsOkAnd(func(v int) bool { return true }) {
+		t.Fatal("expected false for Err")
+	}
+}
+
+func TestIsErrAndTrue(t *testing.T) {
+	r := Err[int](errors.New("not found"))
+	if !r.IsErrAnd(func(err error) bool { return err.Error() == "not found" }) {
+		t.Fatal("expected true")
+	}
+}
+
+func TestIsErrAndFalse(t *testing.T) {
+	r := Err[int](errors.New("not found"))
+	if r.IsErrAnd(func(err error) bool { return err.Error() == "timeout" }) {
+		t.Fatal("expected false when predicate fails")
+	}
+}
+
+func TestIsErrAndOk(t *testing.T) {
+	r := Ok(42)
+	if r.IsErrAnd(func(err error) bool { return true }) {
+		t.Fatal("expected false for Ok")
+	}
+}
+
+func TestTapOk(t *testing.T) {
+	r := Ok(42)
+	var captured int
+	got := r.Tap(func(v int) { captured = v })
+	if captured != 42 {
+		t.Fatalf("expected captured 42, got %d", captured)
+	}
+	if !got.IsOk() || got.Unwrap() != 42 {
+		t.Fatalf("expected original Ok(42) returned, got %v", got)
+	}
+}
+
+func TestTapErr(t *testing.T) {
+	r := Err[int](errors.New("fail"))
+	called := false
+	got := r.Tap(func(v int) { called = true })
+	if called {
+		t.Fatal("Tap should not call fn for Err")
+	}
+	if !got.IsErr() {
+		t.Fatal("expected Err returned")
+	}
+}
+
+func TestTapErrOnErr(t *testing.T) {
+	r := Err[int](errors.New("fail"))
+	var captured error
+	got := r.TapErr(func(err error) { captured = err })
+	if captured == nil || captured.Error() != "fail" {
+		t.Fatalf("expected captured 'fail' error, got %v", captured)
+	}
+	if !got.IsErr() {
+		t.Fatal("expected Err returned")
+	}
+}
+
+func TestTapErrOnOk(t *testing.T) {
+	r := Ok(42)
+	called := false
+	got := r.TapErr(func(err error) { called = true })
+	if called {
+		t.Fatal("TapErr should not call fn for Ok")
+	}
+	if !got.IsOk() || got.Unwrap() != 42 {
+		t.Fatal("expected original Ok(42) returned")
+	}
+}
+
 func TestMatchReturnType(t *testing.T) {
 	r := Ok(10)
 	val := Match(r,

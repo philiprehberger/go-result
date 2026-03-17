@@ -88,6 +88,42 @@ msg := result.Match(r,
 )
 ```
 
+### Error Recovery
+
+```go
+r := result.Err[int](errors.New("primary failed"))
+val := r.OrElse(func(err error) result.Result[int] {
+    log.Printf("recovering from: %v", err)
+    return result.Ok(fallbackValue())
+})
+```
+
+### Filtering
+
+```go
+r := result.Ok(age)
+valid := r.Filter(
+    func(v int) bool { return v >= 18 },
+    func(v int) error { return fmt.Errorf("age %d is below minimum 18", v) },
+)
+```
+
+### Predicate Checks
+
+```go
+r := result.Ok(42)
+r.IsOkAnd(func(v int) bool { return v > 0 })   // true
+r.IsErrAnd(func(err error) bool { return true }) // false
+```
+
+### Side Effects
+
+```go
+r := result.Ok(42)
+r.Tap(func(v int) { log.Printf("got value: %d", v) }).
+    TapErr(func(err error) { log.Printf("got error: %v", err) })
+```
+
 ### Collect Results
 
 ```go
