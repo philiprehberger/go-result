@@ -4,7 +4,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/philiprehberger/go-result.svg)](https://pkg.go.dev/github.com/philiprehberger/go-result)
 [![License](https://img.shields.io/github/license/philiprehberger/go-result)](LICENSE)
 
-Generic Result type for Go — `Ok[T]` / `Err[T]` with mapping and chaining.
+Generic Result type for Go — `Ok[T]` / `Err[T]` with mapping and chaining
 
 ## Installation
 
@@ -130,6 +130,35 @@ r.Tap(func(v int) { log.Printf("got value: %d", v) }).
 results := []result.Result[int]{result.Ok(1), result.Ok(2), result.Ok(3)}
 combined := result.All(results) // Ok([1, 2, 3])
 ```
+
+## API
+
+| Function / Method | Description |
+|---|---|
+| `Result[T]` | Generic type representing either a success or error value |
+| `Ok[T](value T) Result[T]` | Create a successful Result |
+| `Err[T](err error) Result[T]` | Create a failed Result |
+| `Errf[T](format string, args ...any) Result[T]` | Create a failed Result with formatted error |
+| `Try[T](fn func() (T, error)) Result[T]` | Wrap a (T, error) call into a Result |
+| `Map[T, U](r Result[T], fn func(T) U) Result[U]` | Transform the success value |
+| `FlatMap[T, U](r Result[T], fn func(T) Result[U]) Result[U]` | Chain Results with a function returning Result |
+| `All[T](results []Result[T]) Result[[]T]` | Collect a slice of Results into a single Result |
+| `Match[T, U](r Result[T], onOk func(T) U, onErr func(error) U) U` | Pattern match on Ok or Err |
+| `(Result[T]) IsOk() bool` | True if the Result is a success |
+| `(Result[T]) IsErr() bool` | True if the Result is an error |
+| `(Result[T]) IsOkAnd(fn func(T) bool) bool` | True if Ok and value matches predicate |
+| `(Result[T]) IsErrAnd(fn func(error) bool) bool` | True if Err and error matches predicate |
+| `(Result[T]) Unwrap() T` | Return success value or panic |
+| `(Result[T]) Expect(msg string) T` | Return success value or panic with message |
+| `(Result[T]) UnwrapOr(def T) T` | Return success value or the provided default |
+| `(Result[T]) UnwrapOrElse(fn func(error) T) T` | Return success value or compute from error |
+| `(Result[T]) Or(other Result[T]) Result[T]` | Return self if Ok, otherwise the fallback |
+| `(Result[T]) OrElse(fn func(error) Result[T]) Result[T]` | Return self if Ok, otherwise compute fallback |
+| `(Result[T]) Filter(pred func(T) bool, errFn func(T) error) Result[T]` | Convert to Err if value fails predicate |
+| `(Result[T]) Tap(fn func(T)) Result[T]` | Run side effect on Ok value, return unchanged |
+| `(Result[T]) TapErr(fn func(error)) Result[T]` | Run side effect on Err value, return unchanged |
+| `(Result[T]) Error() error` | Return the error or nil |
+| `(Result[T]) String() string` | Human-readable representation |
 
 ## Development
 
