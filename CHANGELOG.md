@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1
+
+- Consolidate README badges onto single line
+
 ## 0.4.0
 
 - Add `OrElse` for error recovery
