@@ -1,6 +1,6 @@
 # go-result
 
-[![CI](https://github.com/philiprehberger/go-result/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/go-result/actions/workflows/ci.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/philiprehberger/go-result.svg)](https://pkg.go.dev/github.com/philiprehberger/go-result) [![License](https://img.shields.io/github/license/philiprehberger/go-result)](LICENSE)
+[![CI](https://github.com/philiprehberger/go-result/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/go-result/actions/workflows/ci.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/philiprehberger/go-result.svg)](https://pkg.go.dev/github.com/philiprehberger/go-result) [![License](https://img.shields.io/github/license/philiprehberger/go-result)](LICENSE) [![Sponsor](https://img.shields.io/badge/sponsor-GitHub%20Sponsors-ec6cb9)](https://github.com/sponsors/philiprehberger)
 
 Generic Result type for Go — `Ok[T]` / `Err[T]` with mapping and chaining
 
